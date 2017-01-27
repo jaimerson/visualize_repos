@@ -1,1 +1,0 @@
-export { numberOfRepositories } from './repositories';
