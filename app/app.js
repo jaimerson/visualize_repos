@@ -5,20 +5,22 @@ import { schemeCategory10 } from 'd3-scale';
 const languages = ['ruby', 'javascript', 'java', 'go', 'elixir',
                    'haskell', 'c', 'cpp', 'lua', 'python'];
 
-const maxDiameter = 500;
 const forceStrength = 0.0063;
 const color = d3.scaleOrdinal(schemeCategory10);
 
 const renderChart = (data) => {
+  const maxHeight = window.innerHeight;
+  const maxWidth = window.innerWidth;
+
   const radiusScale = d3.scalePow()
     .exponent(0.5)
-    .range([2, maxDiameter * 0.3])
-    .domain([0, 50 * d3.max(data, (d) => d.amount)]);
+    .range([20, maxHeight * 0.5])
+    .domain([0, 20 * d3.max(data, (d) => d.amount)]);
 
   const svg = d3.select('body')
     .append('svg')
-    .attr('width', maxDiameter)
-    .attr('height', maxDiameter)
+    .attr('width', maxWidth)
+    .attr('height', maxHeight)
     .attr('class', 'bubbles');
 
   const charge = (d) => {
@@ -33,16 +35,16 @@ const renderChart = (data) => {
 
   const simulation = d3.forceSimulation()
     .velocityDecay(0.2)
-    .force('x', d3.forceX().strength(forceStrength).x(maxDiameter / 2))
-    .force('y', d3.forceY().strength(forceStrength).y(maxDiameter / 2))
-    .force('charge', d3.forceManyBody().strength(charge))
+    .force('x', d3.forceX().strength(forceStrength).x(maxWidth / 2))
+    .force('y', d3.forceY().strength(forceStrength).y(maxHeight / 2))
+    .force('collide', d3.forceCollide((d) => d.radius + 0.5).iterations(2))
     .on('tick', ticked);
 
   let nodes = data.map((d) => {
     return {
       radius: radiusScale(d.amount),
-      x: Math.random() * maxDiameter,
-      y: Math.random() * maxDiameter,
+      x: Math.random() * maxWidth,
+      y: Math.random() * maxHeight,
       amount: d.amount,
       name: d.name
     };
