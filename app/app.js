@@ -5,8 +5,12 @@ import { schemeCategory10 } from 'd3-scale';
 const languages = ['ruby', 'javascript', 'java', 'go', 'elixir',
                    'haskell', 'c', 'cpp', 'lua', 'python'];
 
-const forceStrength = 0.0063;
+const forceStrength = 0.063;
 const color = d3.scaleOrdinal(schemeCategory10);
+
+const formatNumber = (number) => {
+  return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
 
 const renderChart = (data) => {
   const maxHeight = window.innerHeight;
@@ -14,8 +18,8 @@ const renderChart = (data) => {
 
   const radiusScale = d3.scalePow()
     .exponent(0.5)
-    .range([20, maxHeight * 0.5])
-    .domain([0, 20 * d3.max(data, (d) => d.amount)]);
+    .range([50, maxHeight * 0.3])
+    .domain([0, 40 * d3.max(data, (d) => d.amount)]);
 
   const svg = d3.select('body')
     .append('svg')
@@ -29,15 +33,14 @@ const renderChart = (data) => {
 
   const ticked = () => {
     svg.selectAll('.bubble')
-      .attr('cx', (d) => d.x)
-      .attr('cy', (d) => d.y);
+      .attr('transform', (d) => `translate(${d.x - d.radius / 2}, ${d.y - d.radius / 2})`);
   }
 
   const simulation = d3.forceSimulation()
     .velocityDecay(0.2)
     .force('x', d3.forceX().strength(forceStrength).x(maxWidth / 2))
     .force('y', d3.forceY().strength(forceStrength).y(maxHeight / 2))
-    .force('collide', d3.forceCollide((d) => d.radius + 0.5).iterations(2))
+    .force('collide', d3.forceCollide((d) => d.radius * 1.2).iterations(2))
     .on('tick', ticked);
 
   let nodes = data.map((d) => {
@@ -55,18 +58,29 @@ const renderChart = (data) => {
 
   let bubblesE = bubbles
     .enter()
-    .append('circle')
+    .append('g')
     .classed('bubble', true)
-    .attr('r', 0)
-    .attr('cx', (d) => d.x)
-    .attr('cy', (d) => d.y)
+    .attr('transform', (d) => `translate(${d.x}, ${d.y})`);
+
+  bubblesE
+    .append('circle')
+    .attr('r', (d) => d.radius)
     .style('fill', (d) => color(d.amount));
 
-  bubbles = bubbles.merge(bubblesE);
+  bubblesE
+    .append('text')
+    .attr('text-anchor', 'middle')
+    .style('fill', 'white')
+    .text((d) => d.name)
 
-  bubbles.transition()
-    .duration(2000)
-    .attr('r', (d) => d.radius);
+  bubblesE
+    .append('text')
+    .attr('y', '15')
+    .attr('text-anchor', 'middle')
+    .style('fill', 'white')
+    .text((d) => `${formatNumber(d.amount)} repos`)
+
+  bubbles = bubbles.merge(bubblesE);
 
   simulation.nodes(nodes);
 }
